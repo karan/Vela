@@ -261,6 +261,10 @@ off the list when it has been.
   distance under the arrow, the road or the sign's destinations in bold, the verb left to the
   arrow. Seen on a Pixel 5 on a simulated highway drive in English. Not yet checked at large
   text, in compact mode, or in Romanian, the other language with a destination marker.
+- Settings backup file (#951, `SettingsBackup`): export with and without places, import and the
+  restart after it, the custom font. Unit tested and built in CI; needs an export on one phone and
+  an import on a fresh install, then a check that the settings, the font and (when included) Home,
+  Work, saved routes and recents came across, and that no simulator or session state did.
 - Data job fixes: the camera bake asks for CSV and tries again, the maxspeed bake skips a
   region with no tagged roads, a failed velamaps.org deploy no longer stops GitHub Pages, and
   the baseline profile run warns instead of failing when it may not open a pull request. Each
