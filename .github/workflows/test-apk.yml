@@ -44,7 +44,7 @@ jobs:
           test "$(stat -c%s app/libs/sherpa-onnx-1.13.3.aar)" -gt 50000000
 
       - name: Unit tests
-        run: ./gradlew :core:test --no-daemon
+        run: ./gradlew :core:test :app:testDebugUnitTest --no-daemon
 
       - name: Build release APK (installs beside the real Vela)
         # app.vela.dev is a separate package, so the store/F-Droid Vela and its data are untouched.
