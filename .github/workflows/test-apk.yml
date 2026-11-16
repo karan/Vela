@@ -5,7 +5,7 @@ name: Test APK
 
 on:
   push:
-    branches: [ apk-build ]
+    branches: [ ci-951 ]
   workflow_dispatch:
 
 permissions:
@@ -69,11 +69,11 @@ jobs:
           ./gradlew :app:assembleRelease --no-daemon
           -PappId=app.vela.dev
           -PappVersionCode=1
-          -PappVersionName=0.0.1-turncard-851
+          -PappVersionName=0.0.1-settings-951
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: vela-turncard-851-apk
+          name: vela-settings-951-apk
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
