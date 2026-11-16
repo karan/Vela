@@ -1,0 +1,69 @@
+# Test build of the turn-card change (#851) for sideloading. Lives only on the fork's
+# apk-build branch, which removes upstream's workflows so nothing else runs here.
+# Never part of the PR.
+name: Test APK
+
+on:
+  push:
+    branches: [ apk-build ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools
+
+      - uses: gradle/actions/wrapper-validation@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
+
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
+
+      - name: Fetch prebuilt runtimes (upstream releases)
+        run: |
+          mkdir -p core/libs app/libs
+          for f in osmand-java.jar osmand-shared-jvm.jar gnu-trove-osmand.jar kxml2-vela.jar; do
+            curl -fSL -o "core/libs/$f" "https://github.com/PimpinPumpkin/Vela/releases/download/obf-runtime/$f"
+          done
+          v=$(sed -n 's/^vela.cronetVersion=//p' gradle.properties)
+          curl -fSL -o "app/libs/cronet-$v.aar" "https://github.com/PimpinPumpkin/Vela/releases/download/cronet-runtime/cronet-$v.aar"
+          curl -fSL -o app/libs/sherpa-onnx-1.13.3.aar "https://github.com/PimpinPumpkin/Vela/releases/download/tts-runtime/sherpa-onnx-1.13.3.aar"
+          test "$(stat -c%s core/libs/osmand-java.jar)" -gt 10000000
+          test "$(stat -c%s "app/libs/cronet-$v.aar")" -gt 10000000
+          test "$(stat -c%s app/libs/sherpa-onnx-1.13.3.aar)" -gt 50000000
+
+      - name: Unit tests
+        run: ./gradlew :core:test --no-daemon
+
+      - name: Build release APK (installs beside the real Vela)
+        # app.vela.dev is a separate package, so the store/F-Droid Vela and its data are untouched.
+        # Debug-signed (no keystore secrets on the fork). Version code 1, below the release line.
+        run: >
+          ./gradlew :app:assembleRelease --no-daemon
+          -PappId=app.vela.dev
+          -PappVersionCode=1
+          -PappVersionName=0.0.1-turncard-851
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: vela-turncard-851-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: core-test-report
+          path: core/build/reports/tests/
+          if-no-files-found: ignore
